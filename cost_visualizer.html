@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Cost Visualizer</title>
+
+  <style>
+    /* =============================================
+       全体レイアウト・基本スタイル
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #2d3748;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ヘッダー */
+    .page-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .page-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a202c;
+      letter-spacing: -0.5px;
+    }
+    .page-header p {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #718096;
+    }
+
+    /* カード共通 */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #4a5568;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    /* =============================================
+       フォーム
+    ============================================= */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 28px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    label .required {
+      color: #e53e3e;
+      margin-left: 3px;
+    }
+    label .hint {
+      font-weight: 400;
+      color: #a0aec0;
+      font-size: 0.8rem;
+      margin-left: 6px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="number"] {
+      height: 42px;
+      padding: 0 12px;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fff;
+      width: 100%;
+    }
+    input:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66,153,225,0.15);
+    }
+    input.error-field {
+      border-color: #e53e3e;
+    }
+
+    /* =============================================
+       ボタン
+    ============================================= */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .btn {
+      height: 46px;
+      padding: 0 28px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: #2b6cb0;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(43,108,176,0.3);
+    }
+    .btn-primary:hover { background: #2c5282; }
+    .btn-secondary {
+      background: #edf2f7;
+      color: #4a5568;
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    /* =============================================
+       エラーメッセージ
+    ============================================= */
+    .error-box {
+      background: #fff5f5;
+      border: 1.5px solid #feb2b2;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      display: none;
+    }
+    .error-box.show { display: block; }
+    .error-box ul {
+      list-style: none;
+      padding: 0;
+    }
+    .error-box ul li {
+      font-size: 0.88rem;
+      color: #c53030;
+      padding: 3px 0;
+    }
+    .error-box ul li::before {
+      content: '⚠ ';
+    }
+
+    /* =============================================
+       結果エリア
+    ============================================= */
+    #result-section { display: none; }
+    #result-section.show { display: block; }
+
+    /* 案件ヘッダー */
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .result-project-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .result-meta {
+      font-size: 0.85rem;
+      color: #718096;
+    }
+
+    /* 前提表示 */
+    .assumption-note {
+      background: #ebf8ff;
+      border: 1px solid #bee3f8;
+      border-radius: 7px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: #2b6cb0;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* 単価ブロック */
+    .rate-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .rate-item {
+      background: #f7fafc;
+      border-radius: 8px;
+      padding: 14px 18px;
+      border: 1px solid #e2e8f0;
+    }
+    .rate-item .rate-label {
+      font-size: 0.8rem;
+      color: #718096;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .rate-item .rate-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #2d3748;
+      margin-top: 4px;
+    }
+
+    /* コスト3種 */
+    .cost-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .cost-card {
+      border-radius: 10px;
+      padding: 18px 20px;
+      border: 1.5px solid transparent;
+      position: relative;
+    }
+    .cost-card.c1 { background: #ebf8ff; border-color: #90cdf4; }
+    .cost-card.c2 { background: #f0fff4; border-color: #9ae6b4; }
+    .cost-card.c3 { background: #faf5ff; border-color: #d6bcfa; }
+
+    .cost-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .c1 .cost-badge { background: #bee3f8; color: #2b6cb0; }
+    .c2 .cost-badge { background: #c6f6d5; color: #276749; }
+    .c3 .cost-badge { background: #e9d8fd; color: #553c9a; }
+
+    .cost-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 6px;
+    }
+    .cost-basis {
+      font-size: 0.78rem;
+      color: #a0aec0;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .cost-amount {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .c1 .cost-amount { color: #2b6cb0; }
+    .c2 .cost-amount { color: #276749; }
+    .c3 .cost-amount { color: #553c9a; }
+    .cost-days-note {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 6px;
+    }
+
+    /* 営業日数サマリ */
+    .biz-days-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .biz-chip {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 7px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      color: #4a5568;
+    }
+    .biz-chip strong { color: #1a202c; }
+
+    /* 祝日注記 */
+    .holiday-note {
+      font-size: 0.8rem;
+      color: #dd6b20;
+      background: #fffaf0;
+      border: 1px solid #fbd38d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ページヘッダー -->
+  <div class="page-header">
+    <h1>Project Cost Visualizer</h1>
+    <p>案件ごとの工数と人件費コストを可視化します（通貨: THB）</p>
+  </div>
+
+  <!-- ====== 入力フォーム ====== -->
+  <div class="card">
+    <div class="card-title">入力フォーム</div>
+
+    <div class="form-grid">
+
+      <!-- 案件名 -->
+      <div class="form-group full-width">
+        <label for="projectName">案件名 <span class="required">*</span></label>
+        <input type="text" id="projectName" placeholder="例: ABC社 市場調査" />
+      </div>
+
+      <!-- Order Date -->
+      <div class="form-group">
+        <label for="orderDate">Order Date（受注日） <span class="required">*</span></label>
+        <input type="date" id="orderDate" />
+      </div>
+
+      <!-- Finish Date -->
+      <div class="form-group">
+        <label for="finishDate">Finish Date（完了日） <span class="required">*</span></label>
+        <input type="date" id="finishDate" />
+      </div>
+
+      <!-- PIC -->
+      <div class="form-group">
+        <label for="pic">PIC（担当者名） <span class="required">*</span></label>
+        <input type="text" id="pic" placeholder="例: Tanaka" />
+      </div>
+
+      <!-- Monthly Salary -->
+      <div class="form-group">
+        <label for="monthlySalary">
+          Monthly Salary <span class="required">*</span>
+          <span class="hint">月給（THB）</span>
+        </label>
+        <input type="number" id="monthlySalary" placeholder="例: 50000" min="1" />
+      </div>
+
+      <!-- Days -->
+      <div class="form-group">
+        <label for="days">
+          Days <span class="required">*</span>
+          <span class="hint">この案件に関わった実日数</span>
+        </label>
+        <input type="number" id="days" placeholder="例: 10" min="0" step="0.5" />
+      </div>
+
+      <!-- Hours -->
+      <div class="form-group">
+        <label for="hours">
+          Hours <span class="required">*</span>
+          <span class="hint">この案件にかかった総時間（24h超OK）</span>
+        </label>
+        <input type="number" id="hours" placeholder="例: 80" min="0" step="0.5" />
+      </div>
+
+    </div>
+
+    <!-- エラー表示 -->
+    <div class="error-box" id="errorBox">
+      <ul id="errorList"></ul>
+    </div>
+
+    <!-- ボタン -->
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calculate()">計算する</button>
+      <button class="btn btn-secondary" onclick="resetForm()">リセットする</button>
+    </div>
+  </div>
+
+  <!-- ====== 結果エリア ====== -->
+  <div class="card" id="result-section">
+    <div class="card-title">計算結果</div>
+
+    <!-- 案件名と担当者 -->
+    <div class="result-header">
+      <div class="result-project-name" id="res-projectName"></div>
+      <div class="result-meta" id="res-meta"></div>
+    </div>
+
+    <!-- 前提の注記 -->
+    <div class="assumption-note">
+      📌 計算の前提：月平均稼働日数 = <strong>22日</strong>（固定）　|　1日労働時間 = <strong>8時間</strong>（固定）<br>
+      　　営業日数はタイの祝日を簡易考慮（2025〜2026年分を配列で保持）。完全な祝日対応ではありません。
+    </div>
+
+    <!-- 営業日数チップ -->
+    <div class="biz-days-row">
+      <div class="biz-chip">📅 受注日 〜 完了日: <strong id="res-dateRange"></strong></div>
+      <div class="biz-chip">🗓 期間内の営業日数（参考値）: <strong id="res-bizDays"></strong> 日</div>
+      <div class="biz-chip">📝 入力 Days: <strong id="res-inputDays"></strong> 日</div>
+      <div class="biz-chip">⏱ 入力 Hours: <strong id="res-inputHours"></strong> h</div>
+    </div>
+
+    <div class="holiday-note" id="holidayNote">
+      ⚠ 祝日は2025〜2026年のタイ国定休日を簡易的に配慮していますが、すべての祝日を網羅しているわけではありません。
+      参考値としてご利用ください。
+    </div>
+
+    <!-- 単価 -->
+    <div class="rate-row" style="margin-top:16px;">
+      <div class="rate-item">
+        <div class="rate-label">日単価（Daily Rate）</div>
+        <div class="rate-value" id="res-dailyRate"></div>
+      </div>
+      <div class="rate-item">
+        <div class="rate-label">時間単価（Hourly Rate）</div>
+        <div class="rate-value" id="res-hourlyRate"></div>
+      </div>
+    </div>
+
+    <!-- コスト3種 -->
+    <div class="cost-grid">
+
+      <div class="cost-card c1">
+        <div class="cost-badge">Cost ①</div>
+        <div class="cost-label">期間ベース</div>
+        <div class="cost-basis">
+          営業日数（<span id="res-c1-days"></span>日）× 日単価
+          <br><small>order date 〜 finish date の全期間で担当した場合の概算</small>
+        </div>
+        <div class="cost-amount" id="res-cost1"></div>
+        <div class="cost-days-note">THB</div>
+      </div>
+
+      <div class="cost-card c2">
+        <div class="cost-badge">Cost ②</div>
+        <div class="cost-label">Days ベース</div>
+        <div class="cost-basis">
+          入力 Days（<span id="res-c2-days"></span>日）× 日単価
+          <br><small>実際に関わった日数ベースの実態に近い値</small>
+        </div>
+        <div class="cost-amount" id="res-cost2"></div>
+        <div class="cost-days-note">THB</div>
+      </div>
+
+      <div class="cost-card c3">
+        <div class="cost-badge">Cost ③</div>
+        <div class="cost-label">Hours ベース</div>
+        <div class="cost-basis">
+          入力 Hours（<span id="res-c3-hours"></span>h）× 時間単価
+          <br><small>実際にかけた時間ベースの最も正確な値</small>
+        </div>
+        <div class="cost-amount" id="res-cost3"></div>
+        <div class="cost-days-note">THB</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+
+<script>
+  // =============================================
+  // 固定値の設定
+  // ※ここを変えると全体の計算に反映されます
+  // =============================================
+
+  // 月の平均稼働日数（タイ: 土日祝休みの一般的な月平均）
+  var WORKING_DAYS_PER_MONTH = 22;
+
+  // 1日の労働時間
+  var WORKING_HOURS_PER_DAY = 8;
+
+  // =============================================
+  // タイの祝日リスト（2025〜2026年・簡易版）
+  // 形式: 'YYYY-MM-DD'
+  // ※完全ではありません。追加・修正はこの配列を編集してください
+  // =============================================
+  var THAI_HOLIDAYS = [
+    // 2025年
+    '2025-01-01', // 元旦
+    '2025-02-12', // Makha Bucha Day
+    '2025-04-06', // Chakri Day
+    '2025-04-13', // Songkran
+    '2025-04-14', // Songkran
+    '2025-04-15', // Songkran
+    '2025-05-01', // Labour Day
+    '2025-05-05', // Coronation Day
+    '2025-05-12', // Visakha Bucha Day
+    '2025-06-03', // H.M. Queen Suthida Birthday
+    '2025-07-10', // Asanha Bucha Day
+    '2025-07-11', // Buddhist Lent Day
+    '2025-07-28', // H.M. King's Birthday
+    '2025-08-12', // H.M. Queen Mother's Birthday
+    '2025-10-13', // H.M. King Bhumibol Memorial Day
+    '2025-10-23', // Chulalongkorn Day
+    '2025-12-05', // H.M. King Bhumibol Birthday
+    '2025-12-10', // Constitution Day
+    '2025-12-31', // New Year's Eve
+
+    // 2026年
+    '2026-01-01', // 元旦
+    '2026-03-03', // Makha Bucha Day（移動祝日・概算）
+    '2026-04-06', // Chakri Day
+    '2026-04-13', // Songkran
+    '2026-04-14', // Songkran
+    '2026-04-15', // Songkran
+    '2026-05-01', // Labour Day
+    '2026-05-05', // Coronation Day
+    '2026-06-01', // Visakha Bucha Day（移動祝日・概算）
+    '2026-06-03', // H.M. Queen Suthida Birthday
+    '2026-07-28', // H.M. King's Birthday
+    '2026-07-29', // Asanha Bucha Day（移動祝日・概算）
+    '2026-08-12', // H.M. Queen Mother's Birthday
+    '2026-10-13', // H.M. King Bhumibol Memorial Day
+    '2026-10-23', // Chulalongkorn Day
+    '2026-12-05', // H.M. King Bhumibol Birthday
+    '2026-12-10', // Constitution Day
+    '2026-12-31', // New Year's Eve
+  ];
+
+  // =============================================
+  // ユーティリティ: 日付が祝日かどうか
+  // =============================================
+  function isHoliday(dateObj) {
+    // YYYY-MM-DD 形式の文字列にして祝日リストと照合
+    var y = dateObj.getFullYear();
+    var m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    var d = String(dateObj.getDate()).padStart(2, '0');
+    var str = y + '-' + m + '-' + d;
+    return THAI_HOLIDAYS.indexOf(str) !== -1;
+  }
+
+  // =============================================
+  // 営業日数を計算（土日 + 祝日を除く）
+  // =============================================
+  function calcBusinessDays(startDate, endDate) {
+    var count = 0;
+    var cur = new Date(startDate);
+    cur.setHours(0, 0, 0, 0);
+    var end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+
+    while (cur <= end) {
+      var dow = cur.getDay(); // 0=日, 6=土
+      if (dow !== 0 && dow !== 6 && !isHoliday(cur)) {
+        count++;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return count;
+  }
+
+  // =============================================
+  // 数値のフォーマット（3桁区切り）
+  // =============================================
+  function fmt(num) {
+    return Math.round(num).toLocaleString('en-US');
+  }
+  function fmtDecimal(num, dec) {
+    return Number(num.toFixed(dec)).toLocaleString('en-US', {
+      minimumFractionDigits: dec,
+      maximumFractionDigits: dec
+    });
+  }
+
+  // =============================================
+  // エラー表示のリセット
+  // =============================================
+  function clearErrors() {
+    var box = document.getElementById('errorBox');
+    box.classList.remove('show');
+    document.getElementById('errorList').innerHTML = '';
+    // 赤枠をすべて消す
+    var inputs = document.querySelectorAll('input');
+    inputs.forEach(function(el) { el.classList.remove('error-field'); });
+  }
+
+  // =============================================
+  // バリデーション + 計算のメイン関数
+  // =============================================
+  function calculate() {
+    clearErrors();
+
+    // --- 値の取得 ---
+    var projectName  = document.getElementById('projectName').value.trim();
+    var orderDateStr = document.getElementById('orderDate').value;
+    var finishDateStr= document.getElementById('finishDate').value;
+    var pic          = document.getElementById('pic').value.trim();
+    var salaryVal    = document.getElementById('monthlySalary').value;
+    var daysVal      = document.getElementById('days').value;
+    var hoursVal     = document.getElementById('hours').value;
+
+    var errors = [];
+
+    // --- バリデーション ---
+    if (!projectName) {
+      errors.push('案件名を入力してください。');
+      document.getElementById('projectName').classList.add('error-field');
+    }
+    if (!orderDateStr) {
+      errors.push('Order Date（受注日）を入力してください。');
+      document.getElementById('orderDate').classList.add('error-field');
+    }
+    if (!finishDateStr) {
+      errors.push('Finish Date（完了日）を入力してください。');
+      document.getElementById('finishDate').classList.add('error-field');
+    }
+    if (!pic) {
+      errors.push('PIC（担当者名）を入力してください。');
+      document.getElementById('pic').classList.add('error-field');
+    }
+    if (salaryVal === '' || Number(salaryVal) <= 0) {
+      errors.push('Monthly Salary（月給）は0より大きい数値を入力してください。');
+      document.getElementById('monthlySalary').classList.add('error-field');
+    }
+    if (daysVal === '' || Number(daysVal) < 0) {
+      errors.push('Days は0以上の数値を入力してください。');
+      document.getElementById('days').classList.add('error-field');
+    }
+    if (hoursVal === '' || Number(hoursVal) < 0) {
+      errors.push('Hours は0以上の数値を入力してください。');
+      document.getElementById('hours').classList.add('error-field');
+    }
+
+    // 日付の前後チェック
+    if (orderDateStr && finishDateStr) {
+      var oDate = new Date(orderDateStr);
+      var fDate = new Date(finishDateStr);
+      if (fDate < oDate) {
+        errors.push('Finish Date は Order Date 以降の日付を入力してください。');
+        document.getElementById('finishDate').classList.add('error-field');
+      }
+    }
+
+    // エラーがあれば表示して止める
+    if (errors.length > 0) {
+      var box  = document.getElementById('errorBox');
+      var list = document.getElementById('errorList');
+      list.innerHTML = '';
+      errors.forEach(function(msg) {
+        var li = document.createElement('li');
+        li.textContent = msg;
+        list.appendChild(li);
+      });
+      box.classList.add('show');
+      document.getElementById('result-section').classList.remove('show');
+      return;
+    }
+
+    // --- 計算 ---
+    var salary  = Number(salaryVal);
+    var days    = Number(daysVal);
+    var hours   = Number(hoursVal);
+    var oDate   = new Date(orderDateStr);
+    var fDate   = new Date(finishDateStr);
+
+    // 日単価・時間単価
+    var dailyRate  = salary / WORKING_DAYS_PER_MONTH;
+    var hourlyRate = dailyRate / WORKING_HOURS_PER_DAY;
+
+    // 営業日数（期間）
+    var bizDays = calcBusinessDays(oDate, fDate);
+
+    // コスト3種
+    var cost1 = bizDays * dailyRate;
+    var cost2 = days    * dailyRate;
+    var cost3 = hours   * hourlyRate;
+
+    // --- 結果の表示 ---
+    // 日付フォーマット
+    function fmtDate(d) {
+      return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+    }
+
+    document.getElementById('res-projectName').textContent = projectName;
+    document.getElementById('res-meta').textContent        = 'PIC: ' + pic + '　|　Monthly Salary: THB ' + fmt(salary);
+    document.getElementById('res-dateRange').textContent   = fmtDate(oDate) + ' 〜 ' + fmtDate(fDate);
+    document.getElementById('res-bizDays').textContent     = bizDays;
+    document.getElementById('res-inputDays').textContent   = days;
+    document.getElementById('res-inputHours').textContent  = hours;
+
+    document.getElementById('res-dailyRate').textContent   = 'THB ' + fmtDecimal(dailyRate, 1);
+    document.getElementById('res-hourlyRate').textContent  = 'THB ' + fmtDecimal(hourlyRate, 1);
+
+    document.getElementById('res-c1-days').textContent  = bizDays;
+    document.getElementById('res-cost1').textContent     = fmt(cost1);
+
+    document.getElementById('res-c2-days').textContent  = days;
+    document.getElementById('res-cost2').textContent     = fmt(cost2);
+
+    document.getElementById('res-c3-hours').textContent = hours;
+    document.getElementById('res-cost3').textContent     = fmt(cost3);
+
+    // 結果エリアを表示してスクロール
+    var resultEl = document.getElementById('result-section');
+    resultEl.classList.add('show');
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // =============================================
+  // フォームをリセット
+  // =============================================
+  function resetForm() {
+    // フォームの全フィールドを空に
+    document.getElementById('projectName').value  = '';
+    document.getElementById('orderDate').value    = '';
+    document.getElementById('finishDate').value   = '';
+    document.getElementById('pic').value          = '';
+    document.getElementById('monthlySalary').value= '';
+    document.getElementById('days').value         = '';
+    document.getElementById('hours').value        = '';
+
+    // エラーと結果を非表示
+    clearErrors();
+    document.getElementById('result-section').classList.remove('show');
+
+    // 先頭にスクロール
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
