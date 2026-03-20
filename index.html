@@ -115,6 +115,32 @@
       border-color: #e53e3e;
     }
 
+    select {
+      height: 42px;
+      padding: 0 12px;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fff;
+      cursor: pointer;
+      flex-shrink: 0;
+      width: 90px;
+    }
+    select:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66,153,225,0.15);
+    }
+    .input-with-select {
+      display: flex;
+      gap: 8px;
+    }
+    .input-with-select input {
+      flex: 1;
+    }
+
     /* =============================================
        ボタン
     ============================================= */
@@ -370,7 +396,13 @@
       <!-- PIC -->
       <div class="form-group">
         <label for="pic">PIC（担当者名） <span class="required">*</span></label>
-        <input type="text" id="pic" placeholder="例: Tanaka" />
+        <div class="input-with-select">
+          <input type="text" id="pic" placeholder="例: Tanaka" />
+          <select id="picRole">
+            <option value="Main">Main</option>
+            <option value="Sub">Sub</option>
+          </select>
+        </div>
       </div>
 
       <!-- Monthly Salary -->
@@ -631,6 +663,7 @@
     var orderDateStr = document.getElementById('orderDate').value;
     var finishDateStr= document.getElementById('finishDate').value;
     var pic          = document.getElementById('pic').value.trim();
+    var picRole      = document.getElementById('picRole').value;
     var salaryVal    = document.getElementById('monthlySalary').value;
     var daysVal      = document.getElementById('days').value;
     var hoursVal     = document.getElementById('hours').value;
@@ -718,7 +751,7 @@
     }
 
     document.getElementById('res-projectName').textContent = projectName;
-    document.getElementById('res-meta').textContent        = 'PIC: ' + pic + '　|　Monthly Salary: THB ' + fmt(salary);
+    document.getElementById('res-meta').textContent        = 'PIC: ' + pic + ' (' + picRole + ')　|　Monthly Salary: THB ' + fmt(salary);
     document.getElementById('res-dateRange').textContent   = fmtDate(oDate) + ' 〜 ' + fmtDate(fDate);
     document.getElementById('res-bizDays').textContent     = bizDays;
     document.getElementById('res-inputDays').textContent   = days;
@@ -748,6 +781,7 @@
   function sendEmail() {
     var projectName  = document.getElementById('projectName').value.trim();
     var pic          = document.getElementById('pic').value.trim();
+    var picRole      = document.getElementById('picRole').value;
     var salary       = document.getElementById('monthlySalary').value;
     var orderDateStr = document.getElementById('orderDate').value;
     var finishDateStr= document.getElementById('finishDate').value;
@@ -766,7 +800,7 @@
       '【案件コスト計算結果】\n' +
       '================================\n' +
       '案件名         : ' + projectName + '\n' +
-      'PIC            : ' + pic + '\n' +
+      'PIC            : ' + pic + ' (' + picRole + ')\n' +
       'Monthly Salary : THB ' + Number(salary).toLocaleString('en-US') + '\n' +
       '受注日         : ' + orderDateStr + '\n' +
       '完了日         : ' + finishDateStr + '\n' +
@@ -800,6 +834,7 @@
     document.getElementById('orderDate').value    = '';
     document.getElementById('finishDate').value   = '';
     document.getElementById('pic').value          = '';
+    document.getElementById('picRole').value      = 'Main';
     document.getElementById('monthlySalary').value= '';
     document.getElementById('days').value         = '';
     document.getElementById('hours').value        = '';
