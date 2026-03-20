@@ -318,6 +318,19 @@
       padding: 8px 12px;
       margin-top: 10px;
     }
+
+    /* メール送信ボタン */
+    .btn-mail {
+      background: #38a169;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(56,161,105,0.3);
+    }
+    .btn-mail:hover { background: #276749; }
+    .result-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
   </style>
 </head>
 <body>
@@ -479,6 +492,12 @@
       </div>
 
     </div>
+
+    <!-- メール送信ボタン -->
+    <div class="result-actions">
+      <button class="btn btn-mail" onclick="sendEmail()">📧 メールで送る</button>
+    </div>
+
   </div>
 
 </div><!-- /container -->
@@ -721,6 +740,55 @@
     var resultEl = document.getElementById('result-section');
     resultEl.classList.add('show');
     resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // =============================================
+  // メールで送る
+  // =============================================
+  function sendEmail() {
+    var projectName  = document.getElementById('projectName').value.trim();
+    var pic          = document.getElementById('pic').value.trim();
+    var salary       = document.getElementById('monthlySalary').value;
+    var orderDateStr = document.getElementById('orderDate').value;
+    var finishDateStr= document.getElementById('finishDate').value;
+
+    var bizDays      = document.getElementById('res-bizDays').textContent;
+    var inputDays    = document.getElementById('res-inputDays').textContent;
+    var inputHours   = document.getElementById('res-inputHours').textContent;
+    var dailyRate    = document.getElementById('res-dailyRate').textContent;
+    var hourlyRate   = document.getElementById('res-hourlyRate').textContent;
+    var cost1        = document.getElementById('res-cost1').textContent;
+    var cost2        = document.getElementById('res-cost2').textContent;
+    var cost3        = document.getElementById('res-cost3').textContent;
+
+    var subject = encodeURIComponent('[コスト計算] ' + projectName);
+    var body = encodeURIComponent(
+      '【案件コスト計算結果】\n' +
+      '================================\n' +
+      '案件名         : ' + projectName + '\n' +
+      'PIC            : ' + pic + '\n' +
+      'Monthly Salary : THB ' + Number(salary).toLocaleString('en-US') + '\n' +
+      '受注日         : ' + orderDateStr + '\n' +
+      '完了日         : ' + finishDateStr + '\n' +
+      '\n' +
+      '【単価】\n' +
+      '日単価（Daily Rate）  : ' + dailyRate + '\n' +
+      '時間単価（Hourly Rate）: ' + hourlyRate + '\n' +
+      '\n' +
+      '【期間・工数】\n' +
+      '期間内営業日数 : ' + bizDays + ' 日\n' +
+      '入力 Days      : ' + inputDays + ' 日\n' +
+      '入力 Hours     : ' + inputHours + ' h\n' +
+      '\n' +
+      '【コスト】\n' +
+      'Cost① 期間ベース : THB ' + cost1 + '\n' +
+      'Cost② Daysベース : THB ' + cost2 + '\n' +
+      'Cost③ Hoursベース: THB ' + cost3 + '\n' +
+      '================================\n' +
+      '※月平均稼働日数22日、1日8時間で計算\n'
+    );
+
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
   }
 
   // =============================================
