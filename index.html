@@ -316,6 +316,19 @@
       color: #718096;
       margin-top: 6px;
     }
+    .unit-cost {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      font-size: 0.82rem;
+      color: #4a5568;
+    }
+    .unit-cost strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1rem;
+      color: #1a202c;
+    }
 
     /* 営業日数サマリ */
     .biz-days-row {
@@ -432,6 +445,15 @@
         <input type="number" id="hours" placeholder="例: 80" min="0" step="0.5" />
       </div>
 
+      <!-- Slides -->
+      <div class="form-group">
+        <label for="slideCount">
+          Slides / Pages <span class="required">*</span>
+          <span class="hint">納品スライド枚数</span>
+        </label>
+        <input type="number" id="slideCount" placeholder="例: 20" min="1" step="1" />
+      </div>
+
     </div>
 
     <!-- エラー表示 -->
@@ -468,6 +490,7 @@
       <div class="biz-chip">🗓 期間内の営業日数（参考値）: <strong id="res-bizDays"></strong> 日</div>
       <div class="biz-chip">📝 入力 Days: <strong id="res-inputDays"></strong> 日</div>
       <div class="biz-chip">⏱ 入力 Hours: <strong id="res-inputHours"></strong> h</div>
+      <div class="biz-chip">📄 スライド枚数: <strong id="res-slideCount"></strong> 枚</div>
     </div>
 
     <div class="holiday-note" id="holidayNote">
@@ -499,6 +522,10 @@
         </div>
         <div class="cost-amount" id="res-cost1"></div>
         <div class="cost-days-note">THB</div>
+        <div class="unit-cost">
+          1枚あたりコスト
+          <strong id="res-cost1-per-slide"></strong>
+        </div>
       </div>
 
       <div class="cost-card c2">
@@ -510,6 +537,10 @@
         </div>
         <div class="cost-amount" id="res-cost2"></div>
         <div class="cost-days-note">THB</div>
+        <div class="unit-cost">
+          1枚あたりコスト
+          <strong id="res-cost2-per-slide"></strong>
+        </div>
       </div>
 
       <div class="cost-card c3">
@@ -521,6 +552,10 @@
         </div>
         <div class="cost-amount" id="res-cost3"></div>
         <div class="cost-days-note">THB</div>
+        <div class="unit-cost">
+          1枚あたりコスト
+          <strong id="res-cost3-per-slide"></strong>
+        </div>
       </div>
 
     </div>
@@ -667,6 +702,7 @@
     var salaryVal    = document.getElementById('monthlySalary').value;
     var daysVal      = document.getElementById('days').value;
     var hoursVal     = document.getElementById('hours').value;
+    var slideCountVal= document.getElementById('slideCount').value;
 
     var errors = [];
 
@@ -699,6 +735,14 @@
       errors.push('Hours は0以上の数値を入力してください。');
       document.getElementById('hours').classList.add('error-field');
     }
+    if (
+      slideCountVal === '' ||
+      !Number.isInteger(Number(slideCountVal)) ||
+      Number(slideCountVal) <= 0
+    ) {
+      errors.push('Slides / Pages は1以上の整数を入力してください。');
+      document.getElementById('slideCount').classList.add('error-field');
+    }
 
     // 日付の前後チェック
     if (orderDateStr && finishDateStr) {
@@ -729,6 +773,7 @@
     var salary  = Number(salaryVal);
     var days    = Number(daysVal);
     var hours   = Number(hoursVal);
+    var slideCount = Number(slideCountVal);
     var oDate   = new Date(orderDateStr);
     var fDate   = new Date(finishDateStr);
 
@@ -743,6 +788,9 @@
     var cost1 = bizDays * dailyRate;
     var cost2 = days    * dailyRate;
     var cost3 = hours   * hourlyRate;
+    var costPerSlide1 = cost1 / slideCount;
+    var costPerSlide2 = cost2 / slideCount;
+    var costPerSlide3 = cost3 / slideCount;
 
     // --- 結果の表示 ---
     // 日付フォーマット
@@ -756,18 +804,22 @@
     document.getElementById('res-bizDays').textContent     = bizDays;
     document.getElementById('res-inputDays').textContent   = days;
     document.getElementById('res-inputHours').textContent  = hours;
+    document.getElementById('res-slideCount').textContent  = slideCount;
 
     document.getElementById('res-dailyRate').textContent   = 'THB ' + fmtDecimal(dailyRate, 1);
     document.getElementById('res-hourlyRate').textContent  = 'THB ' + fmtDecimal(hourlyRate, 1);
 
     document.getElementById('res-c1-days').textContent  = bizDays;
     document.getElementById('res-cost1').textContent     = fmt(cost1);
+    document.getElementById('res-cost1-per-slide').textContent = 'THB ' + fmtDecimal(costPerSlide1, 1);
 
     document.getElementById('res-c2-days').textContent  = days;
     document.getElementById('res-cost2').textContent     = fmt(cost2);
+    document.getElementById('res-cost2-per-slide').textContent = 'THB ' + fmtDecimal(costPerSlide2, 1);
 
     document.getElementById('res-c3-hours').textContent = hours;
     document.getElementById('res-cost3').textContent     = fmt(cost3);
+    document.getElementById('res-cost3-per-slide').textContent = 'THB ' + fmtDecimal(costPerSlide3, 1);
 
     // 結果エリアを表示してスクロール
     var resultEl = document.getElementById('result-section');
@@ -785,15 +837,20 @@
     var salary       = document.getElementById('monthlySalary').value;
     var orderDateStr = document.getElementById('orderDate').value;
     var finishDateStr= document.getElementById('finishDate').value;
+    var slideCount   = document.getElementById('slideCount').value;
 
     var bizDays      = document.getElementById('res-bizDays').textContent;
     var inputDays    = document.getElementById('res-inputDays').textContent;
     var inputHours   = document.getElementById('res-inputHours').textContent;
+    var slideCountRes= document.getElementById('res-slideCount').textContent;
     var dailyRate    = document.getElementById('res-dailyRate').textContent;
     var hourlyRate   = document.getElementById('res-hourlyRate').textContent;
     var cost1        = document.getElementById('res-cost1').textContent;
     var cost2        = document.getElementById('res-cost2').textContent;
     var cost3        = document.getElementById('res-cost3').textContent;
+    var costPerSlide1= document.getElementById('res-cost1-per-slide').textContent;
+    var costPerSlide2= document.getElementById('res-cost2-per-slide').textContent;
+    var costPerSlide3= document.getElementById('res-cost3-per-slide').textContent;
 
     var subject = encodeURIComponent('[コスト計算] ' + projectName);
     var body = encodeURIComponent(
@@ -813,11 +870,15 @@
       '期間内営業日数 : ' + bizDays + ' 日\n' +
       '入力 Days      : ' + inputDays + ' 日\n' +
       '入力 Hours     : ' + inputHours + ' h\n' +
+      'スライド枚数   : ' + (slideCountRes || slideCount) + ' 枚\n' +
       '\n' +
       '【コスト】\n' +
       'Cost① 期間ベース : THB ' + cost1 + '\n' +
+      '  1枚あたり      : ' + costPerSlide1 + '\n' +
       'Cost② Daysベース : THB ' + cost2 + '\n' +
+      '  1枚あたり      : ' + costPerSlide2 + '\n' +
       'Cost③ Hoursベース: THB ' + cost3 + '\n' +
+      '  1枚あたり      : ' + costPerSlide3 + '\n' +
       '================================\n' +
       '※月平均稼働日数22日、1日8時間で計算\n'
     );
@@ -838,6 +899,7 @@
     document.getElementById('monthlySalary').value= '';
     document.getElementById('days').value         = '';
     document.getElementById('hours').value        = '';
+    document.getElementById('slideCount').value   = '';
 
     // エラーと結果を非表示
     clearErrors();
